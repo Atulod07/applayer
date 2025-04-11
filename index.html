@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Apod Video Player</title>
+  <style>
+    body {
+      margin: 0;
+      background-color: #000;
+      color: white;
+      font-family: 'Arial', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      max-width: 1000px;
+      border-radius: 15px;
+    }
+    #fullscreen-btn {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #speed-control {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      color: white;
+    }
+    #volume-control, #brightness-control {
+      position: absolute;
+      top: 40px;
+      left: 20px;
+      color: white;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <video id="videoPlayer" controls>
+    <source src="https://cdn-124.pxlapi.dev/file/WXNGUcLE" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
+
+  <button id="fullscreen-btn">⛶ Fullscreen</button>
+  <button id="speed-control">Speed: 1x</button>
+
+  <div id="volume-control">Volume: 100%</div>
+  <div id="brightness-control">Brightness: 100%</div>
+
+  <script>
+    const video = document.getElementById('videoPlayer');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const speedControl = document.getElementById('speed-control');
+    const volumeControl = document.getElementById('volume-control');
+    const brightnessControl = document.getElementById('brightness-control');
+
+    let pressTimer;
+    let isFullscreen = false;
+    let currentSpeed = 1;
+
+    // Long Press for 2x Speed
+    video.addEventListener('mousedown', () => {
+      pressTimer = setTimeout(() => {
+        video.playbackRate = 2.0;
+        speedControl.textContent = "Speed: 2x";
+      }, 300); // 300ms long press
+    });
+
+    video.addEventListener('mouseup', () => {
+      clearTimeout(pressTimer);
+      video.playbackRate = 1.0;
+      speedControl.textContent = "Speed: 1x";
+    });
+
+    // Fullscreen Toggle
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        video.requestFullscreen().catch(err => {
+          alert(`Error attempting to enable full-screen mode: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    // Volume Control with Swipe Right
+    let startTouchX;
+    video.addEventListener('touchstart', (e) => {
+      startTouchX = e.touches[0].clientX;
+    });
+
+    video.addEventListener('touchmove', (e) => {
+      const moveX = e.touches[0].clientX - startTouchX;
+      if (Math.abs(moveX) > 50) {
+        let newVolume = Math.max(0, Math.min(1, video.volume + moveX / 500));
+        video.volume = newVolume;
+        volumeControl.textContent = `Volume: ${(newVolume * 100).toFixed(0)}%`;
+        startTouchX = e.touches[0].clientX;
+      }
+    });
+
+    // Brightness Control with Swipe Left
+    video.addEventListener('touchstart', (e) => {
+      startTouchX = e.touches[0].clientX;
+    });
+
+    video.addEventListener('touchmove', (e) => {
+      const moveX = e.touches[0].clientX - startTouchX;
+      if (Math.abs(moveX) > 50) {
+        let newBrightness = Math.max(0, Math.min(1, (parseFloat(window.getComputedStyle(video).opacity) + moveX / 500)));
+        document.body.style.backgroundColor = `rgb(${newBrightness * 255}, ${newBrightness * 255}, ${newBrightness * 255})`;
+        brightnessControl.textContent = `Brightness: ${(newBrightness * 100).toFixed(0)}%`;
+        startTouchX = e.touches[0].clientX;
+      }
+    });
+
+    // Horizontal Slide (Seek Bar)
+    let isSeeking = false;
+    video.addEventListener('mousemove', (e) => {
+      if (isSeeking) {
+        const percent = (e.clientX / window.innerWidth) * 100;
+        video.currentTime = (percent / 100) * video.duration;
+      }
+    });
+
+    video.addEventListener('mousedown', () => {
+      isSeeking = true;
+    });
+
+    video.addEventListener('mouseup', () => {
+      isSeeking = false;
+    });
+
+    // Speed Control Dropdown
+    speedControl.addEventListener('click', () => {
+      currentSpeed = currentSpeed === 1.0 ? 1.25 : currentSpeed === 1.25 ? 1.5 : currentSpeed === 1.5 ? 2.0 : 1.0;
+      video.playbackRate = currentSpeed;
+      speedControl.textContent = `Speed: ${currentSpeed.toFixed(1)}x`;
+    });
+  </script>
+
+</body>
+</html>
